@@ -1,32 +1,41 @@
-import React, { useState } from "react";
-
-// const todoList = [
-//     {
-//         id: 0,
-//         item: 'Code project'
-//     },
-//     {
-//         id: 1,
-//         item: 'Read book'
-//     }
-// ]
+import React, { useState, useEffect } from "react";
 
 const Todo = () => {
-  const [todoList, setTodoList] = useState([
-    {
-      id: 0,
-      item: "Code project",
-    },
-    {
-      id: 1,
-      item: "Read book",
-    },
-  ]);
+  const API = "https://playground.4geeks.com/apis/fake/todos/user/pierre";
+  const [todoList, setTodoList] = useState([]);
   const [todoItem, setTodoItem] = useState("");
   const [activeItem, setActiveItem] = useState(null);
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
 
-  const submitTask = (e) => {
+  useEffect(() => {
+    if (!user) {
+      newUser();
+    }
+
+    if (user) {
+      getTasks();
+    }
+  }, [user]);
+
+  const getTasks = async () => {
+    const res = await fetch(API);
+    const data = await res.json();
+    console.log(data);
+    setTodoList(data);
+  };
+
+  const newUser = () => {
+    fetch(API, {
+      method: "POST",
+      body: JSON.stringify([]),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((res) => setUser(res.statusText));
+  };
+
+  const submitTask = async (e) => {
     e.preventDefault();
 
     if (!todoItem) {
@@ -38,18 +47,60 @@ const Todo = () => {
     }
 
     if (todoItem) {
-      const task = {
+      const todo = {
+        done: false,
         id: todoList.length + 1,
-        item: todoItem,
+        label: todoItem,
       };
-      setTodoList(todoList.concat(task));
+
+      try {
+        fetch(API, {
+          method: "PUT",
+          body: JSON.stringify([...todoList, todo]),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        console.log(error);
+      }
+      setTodoList(todoList.concat(todo));
       setTodoItem("");
     }
   };
 
   const deleteTask = (id) => {
     console.log("trying to delete", id);
-    setTodoList(todoList.filter((item) => item.id !== id));
+    const newList = todoList.filter((item, key) => key !== id);
+
+    try {
+      fetch(API, {
+        method: "PUT",
+        body: JSON.stringify(newList),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+
+    setTodoList(newList);
+  };
+
+  const clearTasks = () => {
+    try {
+      fetch(API, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      setUser(null);
+      setTodoList([]);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -66,26 +117,33 @@ const Todo = () => {
         </form>
         <div className="todo-list">
           <ul>
-            {todoList.map((item) => (
-              <li
-                key={item.id}
-                onMouseOver={() => setActiveItem(item.id)}
-                onMouseLeave={() => setActiveItem(null)}
-              >
-                {item.item}
-                <span
-                  className={`delete ${
-                    activeItem === item.id ? "show" : "hide"
-                  }`}
-                  onClick={() => deleteTask(item.id)}
+            {todoList ? (
+              todoList.map((item, id) => (
+                <li
+                  key={id}
+                  onMouseOver={() => setActiveItem(id)}
+                  onMouseLeave={() => setActiveItem(null)}
                 >
-                  X
-                </span>
-              </li>
-            ))}
+                  {item.label}
+                  <span
+                    className={`delete ${activeItem === id ? "show" : "hide"}`}
+                    onClick={() => deleteTask(id)}
+                  >
+                    X
+                  </span>
+                </li>
+              ))
+            ) : (
+              <h1>Nothing</h1>
+            )}
           </ul>
         </div>
-        <p>{todoList.length} items left</p>
+        <div className="bottom-items">
+          <p>{todoList.length} items left</p>
+          <button className="clear" onClick={() => clearTasks()}>
+            Clear List
+          </button>
+        </div>
         <div className="stack" />
         <div className="stack2" />
       </div>

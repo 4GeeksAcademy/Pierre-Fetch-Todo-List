@@ -99,3 +99,19 @@ form {
   background-color: #fff;
   border: 1px solid black;
 }
+
+.bottom-items {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clear {
+  padding: 0.2rem;
+  background-color: rgb(80, 80, 80);
+  margin-bottom: 1rem;
+  margin-right: 1rem;
+  outline: none;
+  border-radius: 10%;
+  color: #f5f5f5;
+}
